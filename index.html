@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpensePilot Pro - Income & Expense Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar h1 { font-size: 1.8rem; font-weight: 700; }
+        .navbar p { font-size: 0.9rem; opacity: 0.9; }
+        .navbar-brand { display: flex; align-items: center; gap: 1rem; }
+        .navbar-brand-logo { font-size: 2rem; animation: bounce 2s infinite; }
+        
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        body.light-mode {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .dark-mode .card {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        
+        .light-mode .card {
+            background-color: white;
+            border-color: #e2e8f0;
+            color: #1e293b;
+        }
+        
+        .card {
+            border: 1px solid;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .dark-mode .input-field {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        
+        .light-mode .input-field {
+            background-color: white;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .income-color { color: #10b981; }
+        .expense-color { color: #ef4444; }
+        .net-color { color: #3b82f6; }
+        
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid;
+        }
+        
+        .dark-mode .tab-buttons {
+            border-color: #334155;
+        }
+        
+        .light-mode .tab-buttons {
+            border-color: #e2e8f0;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-button:hover {
+            color: #667eea;
+        }
+        
+        .expense-item, .income-item {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .dark-mode .expense-item, .dark-mode .income-item {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+        }
+        
+        .light-mode .expense-item, .light-mode .income-item {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-description {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .item-meta {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+        
+        .item-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin: 0 1rem;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.6;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .dark-mode .progress-bar {
+            background-color: #334155;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div id="root"></div>
+    
+    <script>
+        const { useState, useEffect } = React;
+        
+        function ExpensePilotApp() {
+            const [expenses, setExpenses] = useState([]);
+            const [incomes, setIncomes] = useState([]);
+            const [darkMode, setDarkMode] = useState(false);
+            const [activeTab, setActiveTab] = useState('overview');
+            
+            const [expenseForm, setExpenseForm] = useState({
+                amount: '', description: '', category: 'food', date: new Date().toISOString().split('T')[0], paidBy: ''
+            });
+            
+            const [incomeForm, setIncomeForm] = useState({
+                amount: '', description: '', category: 'salary', date: new Date().toISOString().split('T')[0], receivedFrom: ''
+            });
+            
+            useEffect(() => {
+                const savedExpenses = localStorage.getItem('expenses');
+                const savedIncomes = localStorage.getItem('incomes');
+                const savedMode = localStorage.getItem('darkMode') === 'true';
+                
+                if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
+                if (savedIncomes) setIncomes(JSON.parse(savedIncomes));
+                
+                setDarkMode(savedMode);
+                document.body.className = savedMode ? 'dark-mode' : 'light-mode';
+            }, []);
+            
+            const addExpense = (e) => {
+                e.preventDefault();
+                if (!expenseForm.amount || !expenseForm.description || !expenseForm.paidBy) {
+                    alert('Please fill all fields');
+                    return;
+                }
+                
+                const newExpense = {
+                    ...expenseForm,
+                    amount: parseFloat(expenseForm.amount),
+                    date: new Date(expenseForm.date),
+                    id: Date.now()
+                };
+                
+                const updated = [newExpense, ...expenses];
+                setExpenses(updated);
+                localStorage.setItem('expenses', JSON.stringify(updated));
+                
+                setExpenseForm({
+                    amount: '', description: '', category: 'food', date: new Date().toISOString().split('T')[0], paidBy: ''
+                });
+            };
+            
+            const addIncome = (e) => {
+                e.preventDefault();
+                if (!incomeForm.amount || !incomeForm.description || !incomeForm.receivedFrom) {
+                    alert('Please fill all fields');
+                    return;
+                }
+                
+                const newIncome = {
+                    ...incomeForm,
+                    amount: parseFloat(incomeForm.amount),
+                    date: new Date(incomeForm.date),
+                    id: Date.now()
+                };
+                
+                const updated = [newIncome, ...incomes];
+                setIncomes(updated);
+                localStorage.setItem('incomes', JSON.stringify(updated));
+                
+                setIncomeForm({
+                    amount: '', description: '', category: 'salary', date: new Date().toISOString().split('T')[0], receivedFrom: ''
+                });
+            };
+            
+            const deleteExpense = (id) => {
+                if (!confirm('Delete this expense?')) return;
+                const updated = expenses.filter(e => e.id !== id);
+                setExpenses(updated);
+                localStorage.setItem('expenses', JSON.stringify(updated));
+            };
+            
+            const deleteIncome = (id) => {
+                if (!confirm('Delete this income?')) return;
+                const updated = incomes.filter(i => i.id !== id);
+                setIncomes(updated);
+                localStorage.setItem('incomes', JSON.stringify(updated));
+            };
+            
+            const toggleDarkMode = () => {
+                const newMode = !darkMode;
+                setDarkMode(newMode);
+                localStorage.setItem('darkMode', newMode);
+                document.body.className = newMode ? 'dark-mode' : 'light-mode';
+            };
+            
+            const totalExpense = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const totalIncome = incomes.reduce((sum, i) => sum + (i.amount || 0), 0);
+            const netBalance = totalIncome - totalExpense;
+            const savingsRate = totalIncome > 0 ? ((netBalance / totalIncome) * 100).toFixed(1) : 0;
+            
+            const expenseByCategory = {};
+            expenses.forEach(e => {
+                expenseByCategory[e.category] = (expenseByCategory[e.category] || 0) + e.amount;
+            });
+            
+            const incomeByCategory = {};
+            incomes.forEach(i => {
+                incomeByCategory[i.category] = (incomeByCategory[i.category] || 0) + i.amount;
+            });
+            
+            const categoryEmojis = {
+                food: '🍔', travel: '✈️', accommodation: '🏠', utilities: '⚡', miscellaneous: '📌',
+                salary: '💼', freelance: '🎨', bonus: '🎁', investment: '📈', other: '💰'
+            };
+            
+            return React.createElement(
+                React.Fragment,
+                null,
+                React.createElement('nav', { className: 'navbar' },
+                    React.createElement('div', { className: 'navbar-brand' },
+                        React.createElement('span', { className: 'navbar-brand-logo' }, '💰'),
+                        React.createElement('div', null,
+                            React.createElement('h1', null, 'ExpensePilot Pro'),
+                            React.createElement('p', null, '📊 Income & Expense Tracker')
+                        )
+                    ),
+                    React.createElement('button', {
+                        className: 'theme-toggle',
+                        onClick: toggleDarkMode
+                    }, darkMode ? '☀️' : '🌙')
+                ),
+                
+                React.createElement('div', { style: { maxWidth: '1400px', margin: '0 auto', padding: '2rem' } },
+                    React.createElement('div', { className: 'grid-3' },
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('div', { className: 'summary-label' }, '📊 Total Income'),
+                            React.createElement('div', { className: 'summary-value income-color' }, '₹' + totalIncome.toFixed(2)),
+                            React.createElement('div', { className: 'progress-bar' },
+                                React.createElement('div', {
+                                    className: 'progress-fill',
+                                    style: { background: 'linear-gradient(90deg, #10b981, #059669)', width: '100%' }
+                                })
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('div', { className: 'summary-label' }, '💸 Total Expense'),
+                            React.createElement('div', { className: 'summary-value expense-color' }, '₹' + totalExpense.toFixed(2)),
+                            React.createElement('div', { className: 'progress-bar' },
+                                React.createElement('div', {
+                                    className: 'progress-fill',
+                                    style: { background: 'linear-gradient(90deg, #ef4444, #dc2626)', width: (totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0) + '%' }
+                                })
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('div', { className: 'summary-label' }, '🎯 Net Balance'),
+                            React.createElement('div', { className: 'summary-value net-color' }, '₹' + netBalance.toFixed(2)),
+                            React.createElement('div', { className: 'summary-label' }, 'Savings Rate: ' + savingsRate + '%')
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'tab-buttons' },
+                        React.createElement('button', {
+                            className: 'tab-button' + (activeTab === 'overview' ? ' active' : ''),
+                            onClick: () => setActiveTab('overview')
+                        }, '📈 Overview'),
+                        React.createElement('button', {
+                            className: 'tab-button' + (activeTab === 'income' ? ' active' : ''),
+                            onClick: () => setActiveTab('income')
+                        }, '💵 Income'),
+                        React.createElement('button', {
+                            className: 'tab-button' + (activeTab === 'expense' ? ' active' : ''),
+                            onClick: () => setActiveTab('expense')
+                        }, '💳 Expense')
+                    ),
+                    
+                    activeTab === 'overview' && React.createElement(
+                        React.Fragment,
+                        null,
+                        React.createElement('div', { className: 'grid-2' },
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '📊 Income vs Expense'),
+                                React.createElement('div', { style: { textAlign: 'center' } },
+                                    React.createElement('div', { style: { marginBottom: '1.5rem', padding: '1rem', borderRadius: '0.5rem', background: 'rgba(16, 185, 129, 0.1)' } },
+                                        React.createElement('div', { style: { fontSize: '0.9rem', opacity: '0.7' } }, 'Total Income'),
+                                        React.createElement('div', { style: { fontSize: '2rem', fontWeight: '700', color: '#10b981' } }, '₹' + totalIncome.toFixed(0))
+                                    ),
+                                    React.createElement('div', { style: { height: '2px', background: '#667eea', margin: '1rem 0' } }),
+                                    React.createElement('div', { style: { marginBottom: '1.5rem', padding: '1rem', borderRadius: '0.5rem', background: 'rgba(239, 68, 68, 0.1)' } },
+                                        React.createElement('div', { style: { fontSize: '0.9rem', opacity: '0.7' } }, 'Total Expense'),
+                                        React.createElement('div', { style: { fontSize: '2rem', fontWeight: '700', color: '#ef4444' } }, '₹' + totalExpense.toFixed(0))
+                                    ),
+                                    React.createElement('div', { style: { height: '2px', background: '#667eea', margin: '1rem 0' } }),
+                                    React.createElement('div', { style: { padding: '1rem', borderRadius: '0.5rem', background: 'rgba(59, 130, 246, 0.1)' } },
+                                        React.createElement('div', { style: { fontSize: '0.9rem', opacity: '0.7' } }, 'Net Savings'),
+                                        React.createElement('div', { style: { fontSize: '2rem', fontWeight: '700', color: '#3b82f6' } }, '₹' + netBalance.toFixed(0))
+                                    )
+                                )
+                            ),
+                            
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '🎯 Spending Distribution'),
+                                React.createElement('div', null,
+                                    Object.entries(expenseByCategory).length > 0 ? Object.entries(expenseByCategory).map(([cat, amount]) => {
+                                        const percentage = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) : 0;
+                                        return React.createElement('div', { key: cat, style: { marginBottom: '1rem' } },
+                                            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.9rem', fontWeight: '600' } },
+                                                React.createElement('span', null, categoryEmojis[cat] + ' ' + cat.charAt(0).toUpperCase() + cat.slice(1)),
+                                                React.createElement('span', null, '₹' + amount.toFixed(0) + ' (' + percentage + '%)')
+                                            ),
+                                            React.createElement('div', { className: 'progress-bar' },
+                                                React.createElement('div', { className: 'progress-fill', style: { width: percentage + '%' } })
+                                            )
+                                        );
+                                    }) : React.createElement('div', { className: 'no-data' }, 'No expenses yet')
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'card', style: { marginTop: '1.5rem' } },
+                            React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '📋 Recent Transactions'),
+                            React.createElement('div', null,
+                                [...incomes, ...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10).map((item, idx) => {
+                                    const isIncome = incomes.find(i => i.id === item.id);
+                                    return React.createElement('div', {
+                                        key: idx,
+                                        className: isIncome ? 'income-item' : 'expense-item'
+                                    },
+                                        React.createElement('div', { className: 'item-details' },
+                                            React.createElement('div', { className: 'item-description' },
+                                                (isIncome ? '📈 ' : '📉 ') + item.description
+                                            ),
+                                            React.createElement('div', { className: 'item-meta' },
+                                                new Date(item.date).toLocaleDateString() + ' • ' + (isIncome ? item.receivedFrom : item.paidBy)
+                                            )
+                                        ),
+                                        React.createElement('div', { className: 'item-amount', style: { color: isIncome ? '#10b981' : '#ef4444' } },
+                                            (isIncome ? '+' : '-') + '₹' + item.amount.toFixed(2)
+                                        )
+                                    );
+                                }),
+                                [...incomes, ...expenses].length === 0 && React.createElement('div', { className: 'no-data' }, 'No transactions yet!')
+                            )
+                        )
+                    ),
+                    
+                    activeTab === 'income' && React.createElement(
+                        React.Fragment,
+                        null,
+                        React.createElement('div', { className: 'grid-2', style: { marginBottom: '1.5rem' } },
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '➕ Add Income'),
+                                React.createElement('form', { onSubmit: addIncome },
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Amount (₹)'),
+                                        React.createElement('input', {
+                                            type: 'number',
+                                            step: '0.01',
+                                            className: 'input-field',
+                                            placeholder: 'Enter amount',
+                                            value: incomeForm.amount,
+                                            onChange: (e) => setIncomeForm({ ...incomeForm, amount: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Description'),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            className: 'input-field',
+                                            placeholder: 'e.g., Monthly salary',
+                                            value: incomeForm.description,
+                                            onChange: (e) => setIncomeForm({ ...incomeForm, description: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Category'),
+                                        React.createElement('select', {
+                                            className: 'input-field',
+                                            value: incomeForm.category,
+                                            onChange: (e) => setIncomeForm({ ...incomeForm, category: e.target.value })
+                                        },
+                                            React.createElement('option', { value: 'salary' }, '💼 Salary'),
+                                            React.createElement('option', { value: 'freelance' }, '🎨 Freelance'),
+                                            React.createElement('option', { value: 'bonus' }, '🎁 Bonus'),
+                                            React.createElement('option', { value: 'investment' }, '📈 Investment'),
+                                            React.createElement('option', { value: 'other' }, '💰 Other')
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Date'),
+                                        React.createElement('input', {
+                                            type: 'date',
+                                            className: 'input-field',
+                                            value: incomeForm.date,
+                                            onChange: (e) => setIncomeForm({ ...incomeForm, date: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Received From'),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            className: 'input-field',
+                                            placeholder: 'Your name or source',
+                                            value: incomeForm.receivedFrom,
+                                            onChange: (e) => setIncomeForm({ ...incomeForm, receivedFrom: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('button', { type: 'submit', className: 'btn btn-primary', style: { width: '100%' } }, '✅ Add Income')
+                                )
+                            ),
+                            
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '💵 Income Summary'),
+                                React.createElement('div', null,
+                                    Object.entries(incomeByCategory).map(([cat, amount]) => {
+                                        const percentage = totalIncome > 0 ? ((amount / totalIncome) * 100).toFixed(1) : 0;
+                                        return React.createElement('div', { key: cat, style: { marginBottom: '1rem' } },
+                                            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', fontWeight: '600' } },
+                                                React.createElement('span', null, categoryEmojis[cat] + ' ' + cat.charAt(0).toUpperCase() + cat.slice(1)),
+                                                React.createElement('span', { style: { color: '#10b981' } }, '₹' + amount.toFixed(2) + ' (' + percentage + '%)')
+                                            )
+                                        );
+                                    })
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '📋 Income History (' + incomes.length + ')'),
+                            React.createElement('div', null,
+                                incomes.length > 0 ? incomes.map((income) => {
+                                    return React.createElement('div', {
+                                        key: income.id,
+                                        className: 'income-item'
+                                    },
+                                        React.createElement('div', { className: 'item-details' },
+                                            React.createElement('div', { className: 'item-description' }, income.description),
+                                            React.createElement('div', { className: 'item-meta' },
+                                                new Date(income.date).toLocaleDateString() + ' • ' + income.category + ' • ' + income.receivedFrom
+                                            )
+                                        ),
+                                        React.createElement('div', null,
+                                            React.createElement('div', { className: 'item-amount income-color' }, '₹' + income.amount.toFixed(2)),
+                                            React.createElement('button', {
+                                                className: 'btn btn-danger',
+                                                style: { padding: '0.5rem 1rem', fontSize: '0.9rem', marginLeft: '1rem' },
+                                                onClick: () => deleteIncome(income.id)
+                                            }, '🗑️')
+                                        )
+                                    );
+                                }) : React.createElement('div', { className: 'no-data' }, 'No income records yet!')
+                            )
+                        )
+                    ),
+                    
+                    activeTab === 'expense' && React.createElement(
+                        React.Fragment,
+                        null,
+                        React.createElement('div', { className: 'grid-2', style: { marginBottom: '1.5rem' } },
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '➕ Add Expense'),
+                                React.createElement('form', { onSubmit: addExpense },
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Amount (₹)'),
+                                        React.createElement('input', {
+                                            type: 'number',
+                                            step: '0.01',
+                                            className: 'input-field',
+                                            placeholder: 'Enter amount',
+                                            value: expenseForm.amount,
+                                            onChange: (e) => setExpenseForm({ ...expenseForm, amount: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Description'),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            className: 'input-field',
+                                            placeholder: 'e.g., Office lunch',
+                                            value: expenseForm.description,
+                                            onChange: (e) => setExpenseForm({ ...expenseForm, description: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Category'),
+                                        React.createElement('select', {
+                                            className: 'input-field',
+                                            value: expenseForm.category,
+                                            onChange: (e) => setExpenseForm({ ...expenseForm, category: e.target.value })
+                                        },
+                                            React.createElement('option', { value: 'food' }, '🍔 Food'),
+                                            React.createElement('option', { value: 'travel' }, '✈️ Travel'),
+                                            React.createElement('option', { value: 'accommodation' }, '🏠 Accommodation'),
+                                            React.createElement('option', { value: 'utilities' }, '⚡ Utilities'),
+                                            React.createElement('option', { value: 'miscellaneous' }, '📌 Miscellaneous')
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Date'),
+                                        React.createElement('input', {
+                                            type: 'date',
+                                            className: 'input-field',
+                                            value: expenseForm.date,
+                                            onChange: (e) => setExpenseForm({ ...expenseForm, date: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'form-label' }, 'Paid By'),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            className: 'input-field',
+                                            placeholder: 'Your name',
+                                            value: expenseForm.paidBy,
+                                            onChange: (e) => setExpenseForm({ ...expenseForm, paidBy: e.target.value }),
+                                            required: true
+                                        })
+                                    ),
+                                    React.createElement('button', { type: 'submit', className: 'btn btn-primary', style: { width: '100%' } }, '➕ Add Expense')
+                                )
+                            ),
+                            
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '💸 Expense Summary'),
+                                React.createElement('div', null,
+                                    Object.entries(expenseByCategory).map(([cat, amount]) => {
+                                        const percentage = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) : 0;
+                                        return React.createElement('div', { key: cat, style: { marginBottom: '1rem' } },
+                                            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', fontWeight: '600' } },
+                                                React.createElement('span', null, categoryEmojis[cat] + ' ' + cat.charAt(0).toUpperCase() + cat.slice(1)),
+                                                React.createElement('span', { style: { color: '#ef4444' } }, '₹' + amount.toFixed(2) + ' (' + percentage + '%)')
+                                            )
+                                        );
+                                    })
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('h2', { style: { marginBottom: '1rem', fontWeight: '700' } }, '📋 Expense History (' + expenses.length + ')'),
+                            React.createElement('div', null,
+                                expenses.length > 0 ? expenses.map((expense) => {
+                                    return React.createElement('div', {
+                                        key: expense.id,
+                                        className: 'expense-item'
+                                    },
+                                        React.createElement('div', { className: 'item-details' },
+                                            React.createElement('div', { className: 'item-description' }, expense.description),
+                                            React.createElement('div', { className: 'item-meta' },
+                                                new Date(expense.date).toLocaleDateString() + ' • ' + expense.category + ' • ' + expense.paidBy
+                                            )
+                                        ),
+                                        React.createElement('div', null,
+                                            React.createElement('div', { className: 'item-amount expense-color' }, '₹' + expense.amount.toFixed(2)),
+                                            React.createElement('button', {
+                                                className: 'btn btn-danger',
+                                                style: { padding: '0.5rem 1rem', fontSize: '0.9rem', marginLeft: '1rem' },
+                                                onClick: () => deleteExpense(expense.id)
+                                            }, '🗑️')
+                                        )
+                                    );
+                                }) : React.createElement('div', { className: 'no-data' }, 'No expenses yet!')
+                            )
+                        )
+                    )
+                )
+            );
+        }
+        
+        ReactDOM.createRoot(document.getElementById('root')).render(
+            React.createElement(ExpensePilotApp)
+        );
+    </script>
+</body>
+</html>
